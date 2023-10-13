@@ -1,0 +1,255 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+Read in and store data files; define NA values
+```{r}
+library(tidyverse)
+
+XYZ_A <- read_csv("XYZ_calA.csv", na = "1000")
+head(XYZ_A)
+
+XYZ_B <- read_csv("XYZ_calB.csv", na = "1000")
+head(XYZ_B)
+
+XYZ_C <- read_csv("XYZ_calC.csv", na = "1000")
+head(XYZ_C)
+
+XYZ_D <- read_csv("XYZ_calD.csv", na = "1000")
+head(XYZ_D)
+
+XYZ_E <- read_csv("XYZ_calE.csv", na = "1000")
+head(XYZ_E)
+
+XYZ_F <- read_csv("XYZ_calF.csv", na = "1000")
+head(XYZ_F)
+
+```
+
+Merge the data frames together with rbind() function
+```{r}
+XYZ_CAL <- rbind(XYZ_A, XYZ_B, XYZ_C, XYZ_D, XYZ_E, XYZ_F)
+print(XYZ_CAL)
+
+#check for error by making sure number of rows match
+nrow(XYZ_CAL) #12500
+nrow(XYZ_A) + nrow(XYZ_B) + nrow(XYZ_C) + nrow(XYZ_D) + nrow(XYZ_E) + nrow(XYZ_F) #12500
+
+```
+
+Add row ID column
+```{r}
+XYZ_CAL <- tibble::rowid_to_column(XYZ_CAL, "ID")
+head(XYZ_CAL)
+
+```
+
+Create new dataframe with datetime column using make_datetime() function from Lubridate package
+```{r}
+#library(lubridate)
+
+XYZ_CAL1 <- XYZ_CAL %>% 
+  mutate(datetime = make_datetime(Year, Month, Day, Hour, Minute, Second))
+```
+
+Create a datetime value from string using ymd_hms() function
+```{r}
+DT <- ymd_hms("1997-06-10 12:06:50")
+```
+
+Visually check new column for errors
+```{r}
+head(XYZ_CAL1$datetime)
+head(XYZ_CAL1)
+```
+
+Create a row for just the times using hms package and parse_hms() function
+```{r}
+library(hms)
+
+#set format
+times <- parse_hms(c("00:00:00.25", "00:00:01", "00:01:30", "01:00:00"))
+times
+
+#set value to numeric
+times_num <- as.numeric(times)
+times_num
+
+#format inputs
+as_hms(times_num)
+
+#add column to dataframe
+XYZ_CAL1$time <- as_hms(paste(XYZ_CAL1$Hour, XYZ_CAL1$Minute, XYZ_CAL1$Second, sep = ":"))
+head(XYZ_CAL1)
+
+```
+
+________________________
+RAW DATA PLOTS
+________________________
+
+Plot raw acceleration data from all 3 Acc XYZ columns
+```{r}
+rawXYZaccplot <- ggplot() + 
+  geom_line(data = XYZ_CAL1, mapping = aes(x = ID, y = Acc_X, color = "X")) + 
+  geom_line(data = XYZ_CAL1, mapping = aes(x = ID, y = Acc_Y, color = "Y")) + 
+  geom_line(data = XYZ_CAL1, mapping = aes(x = ID, y = Acc_Z, color = "Z")) + 
+  geom_hline(yintercept = 0) +
+  labs(title = "Raw Acceleration", x = "sample #", y = "Triaxial Acceleration (m/s^2)") +
+  theme(plot.title = element_text(hjust = 0.5))
+rawXYZaccplot + theme(legend.title = element_blank())
+#ggsave("/cloud/project/projects/mcgreal.pkg_project/XYZ_cal/rawXYZaccplot.png")
+
+```
+
+Plot raw linear acceleration data from all 3 linAcc XYZ columns
+```{r}
+rawXYZlinaccplot <- ggplot() + 
+  geom_line(data = XYZ_CAL1, mapping = aes(x = ID, y = linAcc_X, color = "X")) + 
+  geom_line(data = XYZ_CAL1, mapping = aes(x = ID, y = linAcc_Y, color = "Y")) + 
+  geom_line(data = XYZ_CAL1, mapping = aes(x = ID, y = linAcc_Z, color = "Z")) + 
+  geom_hline(yintercept = 0) +
+  labs(title = "Raw Linear Acceleration", x = "sample #", y = "Triaxial Linear Acceleration (m/s^2)") +
+  theme(plot.title = element_text(hjust = 0.5))
+rawXYZlinaccplot + theme(legend.title = element_blank())
+#ggsave("/cloud/project/projects/mcgreal.pkg_project/XYZ_cal/rawXYZaccplot.png")
+
+```
+
+
+________________________
+SMOOTHED DATA PLOTS
+________________________
+
+Take the average of X/Y/Z measurements over 1 second; create dataframe for each
+```{r}
+#Acceleration columns
+Xacc <- XYZ_CAL1 %>% 
+  select(time, Acc_X) %>% 
+  group_by(time) %>% 
+  summarize(Xacc_mean = mean(Acc_X)) %>%
+  group_by(time)
+head(Xacc)
+
+Yacc <- XYZ_CAL1 %>% 
+  select(time, Acc_Y) %>% 
+  group_by(time) %>% 
+  summarize(Yacc_mean = mean(Acc_Y)) %>%
+  group_by(time)
+head(Yacc)
+
+Zacc <- XYZ_CAL1 %>% 
+  select(time, Acc_Z) %>% 
+  group_by(time) %>% 
+  summarize(Zacc_mean = mean(Acc_Z)) %>%
+  group_by(time)
+head(Zacc)
+
+#Linear Acceleration columns
+Xlinacc <- XYZ_CAL1 %>% 
+  select(time, linAcc_X) %>% 
+  group_by(time) %>% 
+  summarize(Xlinacc_mean = mean(linAcc_X)) %>%
+  group_by(time)
+head(Xlinacc)
+
+Ylinacc <- XYZ_CAL1 %>% 
+  select(time, linAcc_Y) %>% 
+  group_by(time) %>% 
+  summarize(Ylinacc_mean = mean(linAcc_Y)) %>%
+  group_by(time)
+head(Ylinacc)
+
+Zlinacc <- XYZ_CAL1 %>% 
+  select(time, linAcc_Z) %>% 
+  group_by(time) %>% 
+  summarize(Zlinacc_mean = mean(linAcc_Z)) %>%
+  group_by(time)
+head(Zlinacc)
+
+```
+
+Add row ID column to each new dataframe
+```{r}
+Xacc <- tibble::rowid_to_column(Xacc, "ID")
+head(Xacc)
+
+Yacc <- tibble::rowid_to_column(Yacc, "ID")
+head(Yacc)
+
+Zacc <- tibble::rowid_to_column(Zacc, "ID")
+head(Zacc)
+
+Xlinacc <- tibble::rowid_to_column(Xlinacc, "ID")
+head(Xlinacc)
+
+Ylinacc <- tibble::rowid_to_column(Ylinacc, "ID")
+head(Ylinacc)
+
+Zlinacc <- tibble::rowid_to_column(Zlinacc, "ID")
+head(Zlinacc)
+
+```
+
+Plot all acc axes together
+```{r}
+XYZaccplot <- ggplot() + 
+  geom_line(data = Xacc, mapping = aes(x = ID, y = Xacc_mean, color = "X")) + 
+  geom_line(data = Yacc, mapping = aes(x = ID, y = Yacc_mean, color = "Y")) + 
+  geom_line(data = Zacc, mapping = aes(x = ID, y = Zacc_mean, color = "Z")) + 
+  geom_hline(yintercept = 0) +
+  labs(title = "Smoothed Acceleration", x = "time (s)", y = "Acceleration (m/s^2)") +
+  theme(plot.title = element_text(hjust = 0.5))
+XYZaccplot + theme(legend.title = element_blank())
+ggsave("/cloud/project/projects/mcgreal.pkg_project/XYZ_cal/XYZaccplot.png")
+
+```
+
+Plot all linear acc together
+```{r}
+XYZlinaccplot <- ggplot() + 
+  geom_line(data = Xlinacc, mapping = aes(x = ID, y = Xlinacc_mean, color = "X")) + 
+  geom_line(data = Ylinacc, mapping = aes(x = ID, y = Ylinacc_mean, color = "Y")) + 
+  geom_line(data = Zlinacc, mapping = aes(x = ID, y = Zlinacc_mean, color = "Z")) + 
+  geom_hline(yintercept = 0) +
+  labs(title = "Smoothed Linear Acceleration", x = "time (s)", y = "Linear Acceleration (m/s^2)") +
+  theme(plot.title = element_text(hjust = 0.5))
+XYZlinaccplot + theme(legend.title = element_blank())
+ggsave("/cloud/project/projects/mcgreal.pkg_project/XYZ_cal/XYZlinaccplot.png")
+
+```
+
+
+
+_______________________________________________
+Inspect linear acc######
+```{r}
+XYZlinaccplot <- ggplot() + 
+  geom_line(data = Xlinacc, mapping = aes(x = ID, y = Xlinacc_mean, color = "X")) + 
+  geom_line(data = Ylinacc, mapping = aes(x = ID, y = Ylinacc_mean, color = "Y")) + 
+  geom_line(data = Zlinacc, mapping = aes(x = ID, y = Zlinacc_mean, color = "Z")) + 
+  geom_hline(yintercept = 0) +
+  labs(title = "Linear Acceleration", x = "time (s)", y = "Triaxial Linear Acceleration (m/s^2)") +
+  theme(plot.title = element_text(hjust = 0.5))
+XYZlinaccplot + theme(legend.title = element_blank())
+XYZlinaccplot + xlim(0, 50)
+
+```
+
+
+
+
+
+_______
+inspect raw acceleration
+_______
+raw acceleration
+```{r}
+rawXYZaccplot + xlim(0, 1000)
+
+XYZlinaccplot + xlim(100, 200)
+
+```
+
+

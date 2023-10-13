@@ -1,0 +1,124 @@
+Read in file
+```{r}
+crocsdf <- read_csv("croc.csv", na = "1000")
+
+```
+
+```{r}
+crocsdf <- crocsdf %>% 
+  mutate(datetime = make_datetime(Year, Month, Day, Hour, Minute, Second))
+
+DT <- ymd_hms("1997-06-10 12:06:50")
+
+library(hms)
+
+#set format
+times <- parse_hms(c("00:00:00.25", "00:00:01", "00:01:30", "01:00:00"))
+times
+
+#set value to numeric
+times_num <- as.numeric(times)
+times_num
+
+#format inputs
+as_hms(times_num)
+
+#add column to dataframe
+crocsdf$my_time <- as_hms(paste(crocsdf$Hour, crocsdf$Minute, crocsdf$Second, sep = ":"))
+head(crocsdf)
+
+```
+
+```{r}
+crocaccX <- crocsdf[1:1020, 7]
+crocaccY <- crocsdf[1:1020, 8]
+crocaccZ <- crocsdf[1:1020, 9]
+croctime <- crocsdf[1:1020, 16]
+croclat <- crocsdf[1:1020, 4]
+croclon <- crocsdf[1:1020, 5]
+crocID <- crocsdf[1:1020, 1]
+testcrocdf <- data.frame(croctime, crocID, crocaccX, crocaccY, crocaccZ, croclat, croclon)
+View(testcrocdf)
+colnames(testcrocdf)[1] <- "Timestamp"
+colnames(testcrocdf)[2] <- "ID"
+colnames(testcrocdf)[3] <- "X"
+colnames(testcrocdf)[4] <- "Y"
+colnames(testcrocdf)[5] <- "Z"
+colnames(testcrocdf)[6] <- "Latitude"
+colnames(testcrocdf)[7] <- "Longitude"
+
+options(digits.secs = 3)
+testcrocdf$Timestamp <- ymd_hms(testcrocdf$Timestamp, tz = "UTC")
+testcrocdf$Timestamp <- with_tz(testcrocdf$Timestamp, tzone = "America/Costa_Rica")
+```
+
+Calculating VeDBA
+```{r}
+
+VeDBA = sqrt(testcrocdf$X^2 + testcrocdf$Y^2 + testcrocdf$Z^2)
+testcrocdf$VeDBA <- VeDBA
+
+```
+
+Mapping
+```{r}
+#install.packages("ggmap")
+library(ggmap)
+library(cowplot)
+register_google(key = "AIzaSyDkDm-xDPMFeWS7F7CgQhALUGRA9sbTSZM")
+
+boundingbox <- c(left = -85.402851, bottom = 10.225468, right = -85.071261, top = 10.443905)
+map <- get_map(boundingbox, zoom = 11, maptype = "terrain")
+
+crocmap1 <- ggmap(map) + 
+  geom_path(data = testcrocdf, aes(x = Longitude, y = Latitude, color = VeDBA),
+          linewidth = 1.5, lineend = "round", alpha = 0.6) +
+  theme(legend.position = "right")
+print(crocmap1)
+
+testcrocdf1 <- testcrocdf %>% 
+  mutate(ID1 = as.character(ID))
+head(testcrocdf1)
+
+crocmap2 <- ggmap(map) +
+  geom_point(data = testcrocdf1, aes(x = Longitude, y = Latitude, color = ID1)) +
+  geom_path(data = testcrocdf1, aes(x = Longitude, y = Latitude, color = ID1, group = ID1)) +
+  labs(x = "Longitude", y = "Latitude") +
+  scale_colour_manual(name = "Crocodile",
+                      # Adjust the number of values for how many animals you have
+                      values = c("red", "blue", "purple", "green", "orange"), 
+                      # Enough breaks for every animal in the data set
+                      breaks = unique(testcrocdf1$ID)) + 
+  theme(legend.position = "bottom") 
+print(crocmap2)
+
+
+```
+
+```{r}
+
+
+
+
+```
+
+Animate paths
+```{r}
+#install.packages("gganimate")
+library(gganimate)
+# Update plot to animate. I used 'transition_reveal' so that the path builds from the beginning to the end. Use 'transition_states' to show only one point at a time
+path.animate.plot <- crocmap2 +
+  transition_reveal(along = Timestamp) +
+  labs(title = 'Timestamp: {frame_along}')  # Add a label on top to say what date each frame is
+
+# To display the animation, use `animate`.
+# When using your own data, adjust frames per second (fps) to be as fast or slow as you like.
+# Be patient at this stage! It will eventually render in your plotting window
+animate(path.animate.plot,
+        fps = 5)
+
+# Save as gif. This may be a large file, depending on your data set! 
+save_animation(path.animate.plot,
+          file = "animatedpaths.gif")
+
+```

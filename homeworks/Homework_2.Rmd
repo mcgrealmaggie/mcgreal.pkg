@@ -1,0 +1,103 @@
+---
+title: "Homework Two"
+output: html_document
+---
+
+# Homework Two: Due Sept. 1 at 5 pm.
+
+First, we will use a modified version of surveys.csv, which has some strange values entered for NAs. Download like so: 
+
+
+```{r, eval=FALSE}
+
+```
+
+Also, download the homework. 
+```{r, eval=FALSE}
+
+```
+
+
+Each question will direct you to perform a task. Each question that expects code as an answer will have a space for you to enter the code. 
+
+You are welcome, and even encouraged, to work with a partner. I do ask, though, that every member submits their own homework. To submit your homework, simply save it in your RStudio. I will see it.
+
+
+## Question One - 1 point.
+
+Load in the `surveys.csv` data file that is located in your homework folder, and save it to a variable called `surveys`. Use the read_csv function in the `tidyverse` package to do this.
+
+```{r}
+library(tidyverse)
+surveys_hw <- read_csv("surveys.csv")
+surveys_hw
+```
+
+## Question Two - 1 point
+
+Have a look at the copy of `surveys.csv`. You will notice that there are some unusual NA values. Particularly, the "species_id" column has some odd values. Look at the help page for `read_csv`. Can you find a way to read these unusual values as NAs? Are you able to process both NA and the odd value as NAs? Try it out.
+```{r}
+?read_csv
+surveys_na <- read_csv("surveys.csv", na = c("Not Recorded", "NA", ""))
+surveys_na
+```
+
+## Question Three - 1 point
+
+Remove the NA values from the `hindfoot_length` column using a pipe and a filter.
+```{r}
+surveys <- surveys_na %>% 
+  filter(!is.na(hindfoot_length))
+surveys
+```
+
+## Question Four - 2 points
+
+Verify that the NA values were removed. Don't do this by looking at the column - use code.
+```{r}
+surveys_verify <- surveys %>% 
+  filter(hindfoot_length == "NA")
+surveys_verify
+
+```
+
+## Question Five - 1 point
+
+Explain the logic of your answer to Question Four. How did you accomplish this? 
+
+To verify that the NA values were removed from the hindfoot_length column, I ran a pipe using the data frame I attempted to remove those values from in the last question. In the pipe I ran a filter to select only the values that read "NA" in the hindfoot_length column with the code [filter(hindfoot_length == "NA")]. I stored this as a new data frame called "surveys_verify" so I can see the table it produced - I like to store almost all code I run under a name to visualize it afterwards and hope to come up with a solid naming scheme throughout this course since it can get messy sometimes. The code produced a table with 9 columns, as expected, and 0 rows, which means the NAs were successfully removed.
+
+#AMW: Good!
+
+## Question Six - 1 point
+
+Imagine you are testing the hypothesis that mammal body sizes will be larger under climate change to decrease surface to body size ratio. First, what columns in the data frame will you use to address this question? 
+
+To address this question, I would use the columns year (understanding the how long ago the measurements were taken will help to determine the extent of and correlation to impacts from climate change), species_id (to select the mammals and group by species), hindfoot_length (as indicator of body size). 
+
+## Question Seven - 2 points
+
+Let's try some analysis: Use a `filter`, a `group_by`, and a `summarize` to decide if you think mammal body sizes are decreasing under climate change.
+
+```{r eval=FALSE}
+surveys_cc <- surveys %>% 
+  filter(!is.na(species_id)) %>% 
+  group_by(year, species_id) %>% 
+  summarize(hfl = mean(hindfoot_length)) %>% 
+  select(year, hfl, species_id)
+surveys_cc
+
+surveys_cc %>% 
+  filter(!is.na(hfl)) %>% 
+  spread(key = species_id, value = hfl)
+
+library(DT)
+DT::datatable(surveys_cc)
+
+```
+
+## Question Eight - 1 points
+
+Based on the outputs of question 7, does it look like mammal body sizes are decreasing over time?
+
+Based on the outputs of question 7, it does appear that mammal body sizes are decreasing slightly over time.

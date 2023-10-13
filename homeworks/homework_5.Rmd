@@ -1,0 +1,82 @@
+---
+title: "Homework Four"
+output: html_document
+---
+
+#"Homework Five: Due Sept. 29 at 5 pm.
+
+This homework concerns functions.
+
+1. Make a function that reads in data and does some sort of manipulation of it. Undergrads, use the surveys dataset. Graduates, use your own data. Any manipulation is fine: selection, filtering, value removal.
+
+```{r}
+
+mcgreal_pkg_hw <- read_csv("mcgreal.pkg.csv", na = "1000") #I made a folder in "projects" where I can practice writing code with my data for the time being
+View(mcgreal_pkg_hw)
+
+#create a function that selects a column, calculates the absolute value of each value in that column, and then produces a new column with those absolute values
+abs_values <- function(data, column, new_column){
+  new <- data %>% 
+    mutate(new = abs({{column}})) %>% 
+    rename({{new_column}} := new) 
+  return(new)
+}
+
+#run the function for X, Y, and Z Acc columns
+Acc_XYZ_abs_1 <- mcgreal_pkg_hw %>% 
+  abs_values(column = Acc_X, new_column = Acc_X_abs) %>% 
+  abs_values(column = Acc_Y, new_column = Acc_Y_abs) %>% 
+  abs_values(column = Acc_X, new_column = Acc_Z_abs)
+
+View(Acc_XYZ_abs_1)
+
+
+```
+
+2. Add a test to this function. How will you know if it worked, and alert a user if it did not?
+```{r}
+#manually check that all output columns contain only positive values
+test <- sign(Acc_XYZ_abs_1)
+View(test)
+
+#I struggled with this part. The ideas I had were to make all positive values of the original columns negative and then subtract each column from the output columns and check if it resulted in all 0's or to find a way to check if the values are the same in the original and new columns despite +/- signs but I couldn't figure out an efficient way to do either. I chose to just check the signs in the output column to make sure they were all positive. I tried a few different ways to include it in the original function but none worked so I did the check manually for each new column with the code above.
+
+```
+
+Make a function that makes a plot. This can be any type of plot that we covered. Violin, box, scatter. Include the ability to save the plot to a file in the function.
+```{r}
+#plot all 3 original Acc columns together
+library(ggplot2)
+
+Acc_plot <- function(df, x, yX, yY, yZ){
+  plot_XYZ <- ggplot() + 
+    geom_line(data = df, mapping = aes(x = {{x}}, y = {{yX}}), color = "hotpink") + 
+    geom_line(data = df, mapping = aes(x = {{x}}, y = {{yY}}), color = "skyblue2") + 
+    geom_line(data = df, mapping = aes(x = {{x}}, y = {{yZ}}), color = "goldenrod1") +
+    geom_hline(yintercept = 0) 
+  ggsave("/cloud/project/homeworks/plot_xyz.png")
+  return(plot_XYZ)
+}
+
+plot <- Acc_plot(Acc_XYZ_abs_1, Milliseconds, Acc_X, Acc_Y, Acc_Z)
+plot
+
+
+```
+For saving to a file, users of your function may want the ability to choose their file name. Make the filename an argument so that users can do so.
+```{r}
+
+Acc_plot <- function(df, x, yX, yY, yZ, dest){
+  plot_XYZ <- ggplot() + 
+    geom_line(data = df, mapping = aes(x = {{x}}, y = {{yX}}), color = "hotpink") + 
+    geom_line(data = df, mapping = aes(x = {{x}}, y = {{yY}}), color = "skyblue2") + 
+    geom_line(data = df, mapping = aes(x = {{x}}, y = {{yZ}}), color = "goldenrod1") +
+    geom_hline(yintercept = 0) 
+  ggsave(dest)
+  return(plot_XYZ)
+}
+
+plot <- Acc_plot(Acc_XYZ_abs_1, Milliseconds, Acc_X, Acc_Y, Acc_Z, "/cloud/project/homeworks/plot_xyz.png")
+plot
+#AMW: The colors are so nice, but what a pattern. I'm feeling battered by that graphic.
+```

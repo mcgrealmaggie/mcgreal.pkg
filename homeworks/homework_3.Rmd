@@ -1,0 +1,161 @@
+---
+title: "Homework Three"
+author: "April Wright"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Plotting and choices
+
+## 10 points, due Sept. 8 at 5 PM
+
+```{r}
+
+```
+
+0. Read in the surveys.csv dataset. Remove NAs from the datasets.
+
+1. In this homework, we're going to explore how different ways of visualizing the same data. First, take a look at `geom_col()`. Group the surveys data by the species_id column and count how many of each species there are. Use this count data to make a bar plot of the counts per species. 
+
+```{r}
+#read in the surveys.csv dataset
+surveys_hw3 <- read_csv("surveys.csv", na = c("Not Recorded", "NA", ""))
+surveys_hw3
+
+#remove NAs from the dataset
+surveys_hw3_NA <- surveys_hw3 %>% 
+  na.omit()
+surveys_hw3_NA
+
+#group the surveys data by the species_id column and count how many of each species there are
+library(ggplot2)
+surveys_sp <- surveys_hw3_NA %>% 
+  group_by(species_id) %>% 
+  count(species_id)
+View(surveys_sp) #after viewing this dataset I see that there is a category for "Not Recorded" so I went back to the first question and downloaded the original dataset again and defined "Not Recorded", " " and "NA" as NA values before removing them
+
+#use this count data to make a bar plot of the counts per species
+ggplot(data = surveys_sp, mapping = aes(x = species_id, y = n)) + geom_col()
+
+
+```
+2. Take a look at the argument `fct_reorder`. It reorders variables on one or both axes. Try using this to plot the species in order from most to least members.
+
+```{r}
+ggplot(data = surveys_sp, mapping = aes(x = fct_reorder(species_id, n), y = n)) + geom_col()
+
+#reverse the order to descending
+ggplot(data = surveys_sp, mapping = aes(x = fct_rev(fct_reorder(species_id, n)), y = n)) + geom_col()
+```
+
+
+3. What we canonically think of as a bar plot can also be made in R. These can have some interesting properties, such as being able to fill in bars by other aesthetics. Using the surveys dataset, try to plot the number of members of each species, with the bar filled in by sex.
+
+```{r, eval=FALSE}
+surveys_fill <- surveys_hw3 %>% 
+  na.omit() %>% 
+  select(sex, species_id) %>% 
+  group_by(species_id) %>% 
+  count(sex, species_id)
+View(surveys_fill)
+
+ggplot(data = surveys_fill, mapping = aes(x = species_id, y = n, fill= sex)) + geom_col()
+
+```
+
+
+4. `geom_col` accepts various arguments. Try `postion="dodge"` or position="stack". How does this change the plot and how you interpret it? 
+
+
+```{r}
+#position="dodge"
+ggplot(data = surveys_fill, mapping = aes(x = species_id, y = n, fill= sex)) + geom_col(position = "dodge")
+#this argument separates the counts of each species by sex and makes them their own bars next to one another, it helps compare between species
+
+#position="stack"
+ggplot(data = surveys_fill, mapping = aes(x = species_id, y = n, fill= sex)) + geom_col(position = "stack")
+#this argument separates one bar of full species_id counts into the proportion of male and female for that sex and it helps compare within a species
+```
+
+
+5. Even a simple histogram can lead to different interpretations. Make a histogram of hindfoot_lengths in the surveys dataset. Try choosing different binwidths. How does a high bindwith (like 100) this change your interpretation of how the data are distributed? 
+
+```{r}
+#make a histogram of hindfoot_lengths
+ggplot(surveys_hw3_NA, aes(x = hindfoot_length)) + geom_histogram()
+
+ggplot(surveys_hw3_NA, aes(x = hindfoot_length)) + geom_histogram(binwidth = 100)
+
+ggplot(surveys_hw3_NA, aes(x = hindfoot_length)) + geom_histogram(binwidth = 10)
+
+ggplot(surveys_hw3_NA, aes(x = hindfoot_length)) + geom_histogram(binwidth = 1)
+
+ggplot(surveys_hw3_NA, aes(x = hindfoot_length)) + geom_histogram(binwidth = 0.1)
+
+#changing the binwidth value changes the width of each individual bar of the histogram. This can either help you see the overall trend of the data while merged together (with a higher binwidth value) or it can help you separate the amount of each hindfoot_length value obtained by while clearly separated (with a lower binwidth value)
+```
+
+
+6. Next, let's take a look at density plots. First, look at the help for `geom_density`. Density plots are like a smoothed histogram, mostly used for continuous data. But how density is calculated is done using what is called a kernel. To get a sense for what this means, try different kernel types. Some common ones are "triangular", "rectangular", and "gaussian." Try them out, and put the one you think best represents the data in the answer below.
+
+
+```{r, eval=FALSE}
+
+ggplot(data = surveys_hw3_NA, aes(hindfoot_length)) +
+  geom_density(fill = "blue", binwidth = 10, kernel ="gaussian")
+
+#Although I think kernal = "rectangular" shows you the most detail of the variation in the density of  hindfoot_length values, I believe kernal = "gaussian" is best for this data as it summarizes the frequensy of values in a way that is simple to see and understand the general trend/summary without all the extra noise.
+
+#AMW: I sort of wonder if the rectangle view is showing you too much detail, honestly.
+
+```
+
+## Graduate Students:
+
+A common set of journal figure requirements several of you submitted include the following: 
+
++ PDF or PNG
++ At least 300 DPI
++ One column (80 mm) or two column (160mm) wide.
+
+
+
+For each of your plots on the above homework, save figures meeting all requirements in your lastname_directory in a directory called `output.`
+
+--> To do this I reran my code in an R script and exported each image with the properties above to an output folder in my homework directory. In the future I would go to hacky hour for this, but if there is a better way to do this please let me know. 
+
+As a longer-term goal, you each picked a few figures. See if you can find the data that the authors used to make the figures. One of the best ways to learn to make good figures in your field is to copy from what's already published. 
+
+--> I had trouble finding out the properties of the original figures as they do not save for me as the format they were submitted in (may be the computer I'm using?) but all the figures I've submitted are found in journals that meet the requirements above. If we could go over how to check those properties next week in class that would be very helpful!
+
+
+What data did the author's use? 
+
+```
+These authors used datasets with timeseries containing triaxial accelerometry values (x, y, and z value for each x millisecond). The data is continuous and in some cases segmented into chunks of time where the values are averaged over that period. There is also location data for some figures, with latitude and longitude columns corresponding to timestamps.
+```
+
+Is the data you're using for class similar to these data? 
+
+
+```
+Yes! I will have a timeseries of acceleration data as well as GPS locations when fixes occur. I will need to learn how to analyze these separately and when joined together for various types of analyses.
+```
+
+Could you process your data to be similar to these data?
+
+```
+Yes, I will also need to pre-process my data as they do. This means I will need to take the raw data and calculate additional timeseries/columns from it and then use that new data to continue running my analysis and plot together with the location data.
+```
+
+Finally, in the final project in this class, you'll need to produce an R package with five functions: 
+ 
++ One or two for data cleaning and/or data manipulation
++ One or two for a statistical test (ANOVA, linear models, other specialized analyses)
++ One or two for plotting
++ One of your choice for funsies.
+
+In next week's homework, you'll be expected to pick and write one. So start thinking about one now.

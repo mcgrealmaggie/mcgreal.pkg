@@ -1,0 +1,124 @@
+---
+title: "mcgreal_pkg_practice"
+output: html_document
+date: "2023-10-01"
+---
+Read in data
+```{r}
+mcgreal_pkg_practice <- read_csv("mcgreal.pkg.csv", na = "1000") #I made a folder in "projects" where I can practice writing code with my data for the time being
+View(mcgreal_pkg_practice)
+
+```
+
+## R Markdown
+
+Condense timestamp into one column
+```{r}
+library(tidyverse)
+library(lubridate)
+
+my_date <- ymd_hms("1997-06-10 12:06:50")
+
+mcgreal_pkg_practice$timestamp <- ymd_hms(paste(mcgreal_pkg_practice$Year, mcgreal_pkg_practice$Month, mcgreal_pkg_practice$Day, mcgreal_pkg_practice$Hour, mcgreal_pkg_practice$Minute, mcgreal_pkg_practice$Second, sep = "-"))
+View(mcgreal_pkg_practice)
+```
+
+
+#Create a function that selects the Acc columns and subtracts static acceleration to produce a dynamic acceleration columns for each axis
+```{r}
+dynamic_acc <- function(data, column, new_column){
+  new_dacc <- data %>% 
+    mutate(new_dacc = {{column}} - 9.8) %>% 
+    rename({{new_column}} := new_dacc)
+  return(new_dacc)
+}
+
+#run the function for X, Y, and Z Acc columns
+#mcgreal_pkg_1 <- mcgreal_pkg_practice %>% 
+  dynamic_acc(column = Acc_X, new_column = DBA_X) %>% 
+  dynamic_acc(column = Acc_Y, new_column = DBA_Y) %>% 
+  dynamic_acc(column = Acc_Z, new_column = DBA_Z)
+View(mcgreal_pkg_1)
+```
+
+#Convert new dynamic acceleration columns to g where 1m/s^2 = 0.10197162129779283 g.
+```{r}
+convert_to_g <- function(data, column, new_column){
+  convert <- data %>% 
+    mutate(convert = {{column}} * 0.10197162129779283) %>% 
+    rename({{new_column}} := convert)
+  return(convert)
+}
+
+#run the function for the DBA X, Y, and Z axes
+#mcgreal_pkg_2 <- mcgreal_pkg_1 %>% 
+  convert_to_g(column = DBA_X, new_column = DBA_X_g) %>% 
+  convert_to_g(column = DBA_Y, new_column = DBA_Y_g) %>% 
+  convert_to_g(column = DBA_Z, new_column = DBA_Z_g)
+View(mcgreal_pkg_2)
+```
+
+
+Create a function that selects a column, calculates the absolute value of each value in that column, and then produces a new column with those absolute values
+```{r}
+abs_values <- function(data, column, new_column){
+  new <- data %>% 
+    mutate(new = abs({{column}})) %>% 
+    rename({{new_column}} := new) 
+  return(new)
+}
+
+#run the function for X, Y, and Z Acc columns
+mcgreal_pkg_practice_1 <- mcgreal_pkg_practice %>% 
+  abs_values(column = Acc_X, new_column = Acc_X_abs) %>% 
+  abs_values(column = Acc_Y, new_column = Acc_Y_abs) %>% 
+  abs_values(column = Acc_X, new_column = Acc_Z_abs)
+
+View(mcgreal_pkg_practice_1)
+```
+
+Create a function that adds the absolute values of 3 columns together to produce an output column of ODBA
+```{r}
+ODBA <- function(data, column_one, column_two, column_three, new_column){
+  new <- data %>% 
+    mutate(new = {{column_one}} + {{column_two}} + {{column_three}}) %>% 
+    rename({{new_column}} := new)
+  return(new)
+}
+
+mcgreal_pkg_practice_2 <- ODBA(data = mcgreal_pkg_practice_1, column_one = Acc_X_abs, column_two = Acc_Y_abs, column_three = Acc_Z_abs, new_column = ODBA)
+View(mcgreal_pkg_practice_2)
+```
+
+Add row ID 
+```{r}
+mcgreal_pkg_practice_2 <- tibble::rowid_to_column(mcgreal_pkg_practice_2, "ID")
+View(mcgreal_pkg_practice_2)
+```
+
+Plot Acc axes values and ODBA
+```{r}
+library(ggplot2)
+
+Acc_plot <- function(df, x, yX, yY, yZ, yODBA){
+  plot_XYZ <- ggplot() + 
+    geom_line(data = df, mapping = aes(x = {{x}}, y = {{yX}}), color = "hotpink") + 
+    geom_line(data = df, mapping = aes(x = {{x}}, y = {{yY}}), color = "skyblue2") + 
+    geom_line(data = df, mapping = aes(x = {{x}}, y = {{yZ}}), color = "goldenrod1") +
+    geom_line(data = df, mapping = aes(x = {{x}}, y = {{yODBA}}), color = "lightgrey") +
+    geom_hline(yintercept = 0) 
+  ggsave("/cloud/project/projects/mcgreal.pkg_project/plot_1.png")
+  return(plot_XYZ)
+}
+
+plot_1 <- Acc_plot(df =  mcgreal_pkg_practice_2, x = ID, yX = Acc_X, yY = Acc_Y, yZ = Acc_Z ,yODBA = ODBA)
+plot_1
+
+#plot_1_1 <- mcgreal_pkg_practice_2 %>% 
+  select(Acc_X, Acc_Y, Acc_Z, ODBA, timestamp) %>% 
+  group_by(timestamp) %>%
+  mutate(n_timestamp = n_distinct(timestamp))
+#View(plot_1_1)
+```
+
+#AMW: I really love that visual.

@@ -1,0 +1,165 @@
+3 October 23
+Linear modelling 
+- Helps us establish what the relationship between two variables are and how strong they are
+- y dependent on x
+- x variable = predictor/independent/explanatory variable
+- y variable = response/dependent variable
+
+What is the relationship of predictor to response? -> linear model
+  - positive relationship (increase one, increase the other)
+  - negative relationship (one goes up, one goes down)
+  - neutral relationship (some variation but no real trend)
+
+How strong is that relationship?
+  - strong (everything lies pretty much right on the line)
+  - weaker -> noisier (variation around the relationship/line, other factors that influence how     we see that relationship)
+  
+Is the relationship significant?
+  - there is a whole field of predictive linear modeling 
+  - can quantify how much y impacts x
+  
+```{r}
+crabs <- read_csv("crabs.csv")
+View(crabs) #chr (2): color, sex #dbl (6):
+
+```
+
+We are going to look at quantifying some of these relationships
+Get a correlation, make a scatterplot
+```{r}
+ggplot(crabs, aes(x = carapace_length, y = body_depth)) +
+  geom_point()
+
+#positive, wider crab = deeper crab
+#obvious
+#usually isn't
+
+model_fit <- lm(body_depth ~ carapace_length, data = crabs) 
+#"~" means ___ (left) is predicted by ___ (right) aka ___ (left) is dependent on ___ (right)
+summary(model_fit)
+```
+
+Y = BX + E +B0
+  - Y = the thing we are looking to predict, that is explained by our independent variable
+  - B = coefficient/contribution of the predictor. How much (+/-) is each predictor contributing     to the result. For every 1mm of y added, +/- 1mm of x
+  - X = predictor variable. For every 10 mm of body width the crab has, you multiply by B=0.1mm     to get Y=1mm.
+  - E = error term/residual. No relationship is ever perfect. 
+  - B0 = the intercept. Often a weird quantity. It means the value of the response when the         predictor is zero. When our x is 0, what is our y? A hypothetical quantity.
+  
+Y = BX + B0 + E + B2X2 + B3X3
+  - can add on predictor variables
+  
+Let's talk about error:
+OVERFIT
+  - points on a plot; can draw a line that goes through every single point = "OVERFIT"
+  - can't use with any other data unless you have one that fits that exact weird shape, then can     predict those points. But not very adaptable to other points.
+  - try to draw something that kind of gets most points; most fairly close to line but some are     not
+  - for the far points, not very good line and vice versa
+
+RESIDUALS
+  - when we draw a line, never an absolute perfect FIT
+  - quantify FIT by summing up residuals (= line connecting points to main line)
+  - negative residuals = below line
+  - positive rediduals = above line
+  
+What is main line doing?
+  - representing trend
+  - making predictions: for given x __ our model thinks the y is __
+  - we want to quantify residuals to see how happy we are with our model
+  - how?
+  
+QUANTIFYING RESIDUALS/ERROR
+  - take the area of the distance between observed and expenced
+  - quant distance between observed1 and expected1
+  - Res = O1 - E1
+  - issues: there are + and - values
+  - similar residuals above and below the line will cancel out
+  - how do we get around?
+  - take absolute value, sum of the squared error
+  - sum of the squared error: O1 - E1 = R -> R^2 -> sos, gives you absolute value
+  
+ASSUMPTIONS
+  - an axium, something we can assume to be true about reality
+  - all models have assumptions
+  - here we are assuming data can be fit by linear model, they are somewhat linear
+  - we are not going to try to fit linear models to curved data = inappropriate
+  - have to be able to assume our data will show a linear relationship
+  - making linear models across categorical data** maybe what I want to do
+  - be able to assume you have variance across groups that are similar (similar variances for        each group)
+  - normal distribution of residuals: DATA DO NOT NEED TO BE NORMALLY DISTRIBUTED JUST THE RESIDUALS
+  
+____________________
+
+```{r}
+summary(model_fit)
+#residuals not very informative, usually more informative when comparing models (go with model with fewer errors)
+
+#carapace_length row:
+#carapace_length Estimate: B1: how we convert 1 unit x we increase y by this value. as we increase carapace length 1 unit we expect body depth to increase 0.4 units
+#carapace_length Error: mean of predicted x compared to mean of observed x. how close they are
+#carapace_length  p < 0.05 = significant relationship. your probability of observing this data/relationship or a stronger one if there truly is no relationship between x and y variables. if < 0.05 = probably x has something to do with y
+
+#Intercept row: values we would observe if we have a predictor value of 0
+#Intercept Estimate: if x was 0, y would be -1.15527
+
+#residual standard error (take all res and square them to be all positive)
+#R-squared: tells us what % variation in y is explained by x
+#Adjusted R squared has some adjusting for overfitting. most papers use this
+
+
+nrow(crabs)
+```
+
+Let's look at this on a graph (no one wants you to present a model summary that looks like ^^^ summary output)
+```{r}
+#make a base plot
+crab_plot <- ggplot(crabs, aes(x = carapace_length, y = body_depth)) + geom_point(size = 0.5)
+crab_plot
+
+#modify. confidence intervals in pink (95% confident true slope exists within these margins. is a function of the standard error of the slope). annotate the plot
+crab_plot + geom_smooth(method = "lm", color = "navy", size = 0.5, fill = "deeppink") +
+  annotate("text", x = 20, y = 30, label = "R^2 == 0.966", parse = TRUE) + theme_bw()
+```
+
+check normality of residuals
+```{r}
+model_fit <- lm(body_depth ~ carapace_length, data = crabs)
+broom::tidy(model_fit) #package = broom, function = tidy
+broom::augment(model_fit) #allows us to look at every prediction made by our model, uncontrollable amt of info 
+#first two columns = actual observed values
+#fitted column = based on our linear model that we fit, we predict y should be __
+#residual = the distance between the fitted value and the actual observed value
+
+augmented_fit <- broom::augment(model_fit)
+qqnorm(augmented_fit$.resid)
+qqline(augmented_fit$.resid, col = "red") #roughly symmetrical and majority on the line = normally distr residuals
+```
+
+A Nova
+  - linear models are not one thing; they are a family of methods
+  - previous ex = numerical predictor
+  - a nova = categorical predictor (does this categorical value predict some numerical value (does color predict size))
+    - does the variation of body depth vary across sexes?
+    
+```{r}
+#look at data
+ggplot(crabs, aes(x = sex, y = body_depth, color = sex)) + geom_jitter() 
+
+#want our variance to be roughly equal between categories
+
+model_fit <- lm(body_depth ~ sex, data = crabs)
+summary(model_fit)
+
+#first category (alphabetical) becomes the intercept category in the output (Est = ave depth length)
+#sexM is going to be values for the male crabs RELATIVE to the female crabs
+```
+
+```{r}
+ggplot(crabs, aes(x = sex, y = body_depth, color = sex)) +
+  geom_jitter() +
+  stat_summary(fun.data = "mean_se", color = "black")
+#mean = dot, standard error = bars
+
+aov(model_fit) -> anova_model_fit
+summary(anova_model_fit)
+```
