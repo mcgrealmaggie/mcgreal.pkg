@@ -1,0 +1,361 @@
+Read in data
+```{r}
+library(tidyverse)
+Acc_X_cal <- read_csv("Acc_X.csv", na = "1000")
+```
+
+Create df with datetime column using make_datetime() function from Lubridate
+```{r}
+DT_df <- Acc_X_cal %>% 
+  mutate(datetime = make_datetime(Year, Month, Day, Hour, Minute, Second))
+```
+
+
+Create a datetime value from string using ymd_hms() function
+```{r}
+DT <- ymd_hms("1997-06-10 12:06:50")
+```
+
+```{r}
+head(DT_df$datetime)
+```
+
+
+```{r}
+library(hms)
+```
+
+Acc_X_cal$timestamp <- ymd_hms(paste(Acc_X_cal$Year, Acc_X_cal$Month, Acc_X_cal$Day, Acc_X_cal$Hour, Acc_X_cal$Minute, Acc_X_cal$Second, sep = "-"))
+View(Acc_X_cal)
+
+```{r}
+times <- parse_hms(c("00:00:00.25", "00:00:01", "00:01:30", "01:00:00"))
+times
+
+times_num <- as.numeric(times)
+times_num
+
+as_hms(times_num)
+```
+
+```{r}
+DT_df$time <- as_hms(paste(DT_df$Hour, DT_df$Minute, DT_df$Second, sep = ":"))
+
+head(DT_df)
+```
+
+Group by timestamp and take average of acc data for each column
+
+```{r}
+group_X <- DT_df %>% 
+  select(time, Acc_X) %>% 
+  group_by(time) %>% 
+  summarize(X_mean = mean(Acc_X)) %>%
+  group_by(time)
+
+group_X
+```
+
+```{r}
+group_Y <- DT_df %>% 
+  select(time, Acc_Y) %>% 
+  group_by(time) %>% 
+  summarize(Y_mean = mean(Acc_Y)) %>%
+  group_by(time)
+
+group_Y
+  
+```
+
+```{r}
+group_Z <- DT_df %>% 
+  select(time, Acc_Z) %>% 
+  group_by(time) %>% 
+  summarize(Z_mean = mean(Acc_Z)) %>%
+  group_by(time)
+
+group_Z
+```
+Plot all grouped Acc axes together
+```{r}
+Acc_grouped_plot <- ggplot() + 
+  geom_line(data = group_X, mapping = aes(x = time, y = X_mean, color = "X")) + 
+  geom_line(data = group_Y, mapping = aes(x = time, y = Y_mean, color = "Y")) + 
+  geom_line(data = group_Z, mapping = aes(x = time, y = Z_mean, color = "Z")) + 
+  geom_hline(yintercept = 0) + ylim(-2, 10)
+Acc_grouped_plot + theme(legend.title = element_blank())
+ggsave("/cloud/project/projects/mcgreal.pkg_project/Acc_grouped_plot.png")
+
+```
+
+```{r}
+group_X_plot <- ggplot() +
+  geom_line(data = group_X, mapping = aes(x = time, y = X_mean), color = "hotpink")
+group_X_plot
+
+group_Y_plot <- ggplot() +
+  geom_line(data = group_Y, mapping = aes(x = time, y = Y_mean), color = "green")
+group_Y_plot
+
+group_Z_plot <- ggplot() +
+  geom_line(data = group_Z, mapping = aes(x = time, y = Z_mean), color = "goldenrod1")
+group_Z_plot
+
+
+```
+
+
+
+
+Repeat steps for linAcc
+```{r}
+group_linX <- DT_df %>% 
+  select(time, linAcc_X) %>% 
+  group_by(time) %>% 
+  summarize(linX_mean = mean(linAcc_X)) %>%
+  group_by(time)
+group_linX
+
+group_linY <- DT_df %>% 
+  select(time, linAcc_Y) %>% 
+  group_by(time) %>% 
+  summarize(linY_mean = mean(linAcc_Y)) %>%
+  group_by(time)
+group_linY
+
+group_linZ <- DT_df %>% 
+  select(time, linAcc_Z) %>% 
+  group_by(time) %>% 
+  summarize(linZ_mean = mean(linAcc_Z)) %>%
+  group_by(time)
+group_linZ
+
+linAcc_grouped_plot <- ggplot() + 
+  geom_line(data = group_linX, mapping = aes(x = time, y = linX_mean, color = "X")) + 
+  geom_line(data = group_linY, mapping = aes(x = time, y = linY_mean, color = "Y")) + 
+  geom_line(data = group_linZ, mapping = aes(x = time, y = linZ_mean, color = "Z")) + 
+  geom_hline(yintercept = 0) 
+linAcc_grouped_plot + theme(legend.title = element_blank())
+ggsave("/cloud/project/projects/mcgreal.pkg_project/linAcc_grouped_plot.png")
+```
+
+```{r}
+group_linX_plot <- ggplot() +
+  geom_line(data = group_linX, mapping = aes(x = time, y = linX_mean), color = "hotpink") +
+  ylim(0.5,-0.5) + labs(y = "X") + geom_hline(yintercept = 0, size = 0.2) 
+group_linX_plot
+
+group_linY_plot <- ggplot() +
+  geom_line(data = group_linY, mapping = aes(x = time, y = linY_mean), color = "green") +
+   ylim(0.5,-0.5) + labs(y = "Y") + geom_hline(yintercept = 0, size = 0.2) 
+group_linY_plot
+
+group_linZ_plot <- ggplot() +
+  geom_line(data = group_linZ, mapping = aes(x = time, y = linZ_mean), color = "goldenrod1") +
+   ylim(0.5,-0.5) + labs(y = "Z") + geom_hline(yintercept = 0, size = 0.2) 
+group_linZ_plot
+
+#library(cowplot)
+linAcc_plots <- plot_grid(group_linX_plot, group_linY_plot, group_linZ_plot, align = "v", axis = "rlbt", nrow = 3, ncol = 1)
+linAcc_plots
+ggsave("/cloud/project/projects/mcgreal.pkg_project/linAcc_plots.png")
+
+```
+
+```{r}
+group_X_plot <- ggplot() +
+  geom_line(data = group_X, mapping = aes(x = time, y = X_mean), color = "hotpink") +
+  ylim(-2, 10) + labs(y = "X") + geom_hline(yintercept = 0, size = 0.2) 
+group_X_plot
+
+group_Y_plot <- ggplot() +
+  geom_line(data = group_Y, mapping = aes(x = time, y = Y_mean), color = "green") +
+   ylim(-2, 10) + labs(y = "Y") + geom_hline(yintercept = 0, size = 0.2) 
+group_Y_plot
+
+group_Z_plot <- ggplot() +
+  geom_line(data = group_Z, mapping = aes(x = time, y = Z_mean), color = "goldenrod1") +
+   ylim(-2, 10) + labs(y = "Z") + geom_hline(yintercept = 0, size = 0.2) 
+group_Z_plot
+
+#library(cowplot)
+Acc_plots <- plot_grid(group_X_plot, group_Y_plot, group_Z_plot, align = "v", axis = "rlbt", nrow = 3, ncol = 1)
+Acc_plots
+ggsave("/cloud/project/projects/mcgreal.pkg_project/Acc_plots.png")
+```
+
+```{r}
+
+#library(cowplot)
+z1_Acc_plots <- plot_grid(group_X_plot, group_Y_plot, group_Z_plot, align = "v", axis = "rlbt", nrow = 3, ncol = 1)
+z1_Acc_plots
+ggsave("/cloud/project/projects/mcgreal.pkg_project/z1_Acc_plots.png")
+```
+
+
+OLD WAY
+
+Create ID column
+```{r}
+Acc_X_cal_1 <- tibble::rowid_to_column(Acc_X_cal, "ID")
+
+```
+
+Plot all 3 axes of Linear Acceleration for full time duration
+```{r}
+linAcc_cal_plot <- Acc_X_cal_1 %>% 
+  ggplot() + 
+  geom_line(mapping = aes(x = ID, y = linAcc_X, color = "X")) + 
+  geom_line(mapping = aes(x = ID, y = linAcc_Y, color = "Y")) + 
+  geom_line(mapping = aes(x = ID, y = linAcc_Z, color = "Z")) + geom_hline(yintercept = 0) + labs(title = "Forward (+X) Backward (-X) Motion", x = "Sampling interval (sample #)", y = "Linear Acceleration (m/s^2)")
+linAcc_cal_plot
+ggsave("/cloud/project/projects/mcgreal.pkg_project/linAcc_plot.png")
+
+#graph showing the croc moving in the direction of +x. Acc is still, then accelerates (+ spike), then decelerates (- spike), then is still again
+linAcc_cal_plot_2 <- Acc_X_cal_1 %>% 
+  ggplot() + 
+  geom_line(mapping = aes(x = ID, y = linAcc_X, color = "X")) + 
+  geom_line(mapping = aes(x = ID, y = linAcc_Y, color = "Y")) + 
+  geom_line(mapping = aes(x = ID, y = linAcc_Z, color = "Z")) + geom_hline(yintercept = 0) + xlim(600, 800) + labs(title = "Single Movement in +X Direction", x = "Sampling interval (sample #)", y = "Linear Acceleration (m/s^2)")
+linAcc_cal_plot_2
+ggsave("/cloud/project/projects/mcgreal.pkg_project/linAcc_forward.png")
+
+#graph showing the croc moving in the direction of +x. Acc is still, then accelerates (+ spike), then decelerates (- sprike), then is still again
+linAcc_cal_plot_3 <- Acc_X_cal_1 %>% 
+  ggplot() + 
+  geom_line(mapping = aes(x = ID, y = linAcc_X, color = "X")) + 
+  geom_line(mapping = aes(x = ID, y = linAcc_Y, color = "Y")) + 
+  geom_line(mapping = aes(x = ID, y = linAcc_Z, color = "Z")) + geom_hline(yintercept = 0) + xlim(1300, 1700) + labs(title = "Single Movement in -X Direction", x = "Sampling interval (sample #)", y = "Linear Acceleration (m/s^2)")
+linAcc_cal_plot_3
+ggsave("/cloud/project/projects/mcgreal.pkg_project/linAcc_backward.png")
+```
+###lubridate group by h m s and take mean 
+Now try with Acc columns
+```{r}
+Acc_cal_plot <- Acc_X_cal_1 %>% 
+  ggplot() + 
+  geom_line(mapping = aes(x = ID, y = Acc_X, color = "X")) + 
+  geom_line(mapping = aes(x = ID, y = Acc_Y, color = "Y")) + 
+  geom_line(mapping = aes(x = ID, y = Acc_Z, color = "Z")) + geom_hline(yintercept = 0) + labs(title = "Forward (+X) Backward (-X) Motion", x = "Sampling interval (sample #)", y = "Acceleration (m/s^2)")
+Acc_cal_plot
+ggsave("/cloud/project/projects/mcgreal.pkg_project/Acc_plot.png")
+
+Acc_cal_plot_2 <- Acc_X_cal_1 %>% 
+  ggplot() + 
+  geom_line(mapping = aes(x = ID, y = Acc_X, color = "X")) + 
+  geom_line(mapping = aes(x = ID, y = Acc_Y, color = "Y")) + 
+  geom_line(mapping = aes(x = ID, y = Acc_Z, color = "Z")) + geom_hline(yintercept = 0) + xlim(600, 800) + labs(title = "Single Movement in +X Direction", x = "Sampling interval (sample #)", y = "Acceleration (m/s^2)")
+Acc_cal_plot_2
+ggsave("/cloud/project/projects/mcgreal.pkg_project/Acc_forward.png")
+
+Acc_cal_plot_3 <- Acc_X_cal_1 %>% 
+  ggplot() + 
+  geom_line(mapping = aes(x = ID, y = Acc_X, color = "X")) + 
+  geom_line(mapping = aes(x = ID, y = Acc_Y, color = "Y")) + 
+  geom_line(mapping = aes(x = ID, y = Acc_Z, color = "Z")) + geom_hline(yintercept = 0) + xlim(1300, 1700) + labs(title = "Single Movement in -X Direction", x = "Sampling interval (sample #)", y = "Acceleration (m/s^2)") + theme(legend.title.align = none)
+Acc_cal_plot_3
+ggsave("/cloud/project/projects/mcgreal.pkg_project/Acc_backward.png")
+```
+
+Merge plots
+```{r}
+#install.packages("cowplot")
+library(cowplot)
+
+Acc_linAcc_cal <- plot_grid(linAcc_cal_plot, Acc_cal_plot)
+Acc_linAcc_cal
+ggsave("/cloud/project/projects/mcgreal.pkg_project/Acc_linAcc_cal.png")
+```
+
+Break up the zoomed in graphs by axis
+```{r}
+#Linear Acc X
+linAcc_X_cal <- Acc_X_cal_1 %>% 
+  ggplot() + 
+  geom_line(mapping = aes(x = ID, y = linAcc_X), color = "red") + 
+  geom_hline(yintercept = 0) + xlim(600, 800) + labs(y = "X")
+linAcc_X_cal
+ggsave("/cloud/project/projects/mcgreal.pkg_project/linAcc_X_cal.png")
+
+#Linear Acc Y
+linAcc_Y_cal <- Acc_X_cal_1 %>% 
+  ggplot() + 
+  geom_line(mapping = aes(x = ID, y = linAcc_Y), color = "green") + 
+  geom_hline(yintercept = 0) +
+  xlim(600, 800) + labs(y = "Y")
+linAcc_Y_cal
+ggsave("/cloud/project/projects/mcgreal.pkg_project/linAcc_Y_cal.png")
+
+#Linear Acc Z
+linAcc_Z_cal <- Acc_X_cal_1 %>% 
+  ggplot() + 
+  geom_line(mapping = aes(x = ID, y = linAcc_Z), color = "blue") + 
+  geom_hline(yintercept = 0) +
+  xlim(600, 800) + labs(y = "Z")
+linAcc_Z_cal
+ggsave("/cloud/project/projects/mcgreal.pkg_project/linAcc_Z_cal.png")
+
+#combine them
+linAcc_cal_sep <- plot_grid(linAcc_X_cal, linAcc_Y_cal, linAcc_Z_cal, labels = c('1', '1', '2', '2'), ncol = 1)
+linAcc_cal_sep
+ggsave("/cloud/project/projects/mcgreal.pkg_project/linAcc_cal_sep.png")
+```
+
+GRID_ARRANGE
+
+break up zoomed in graphs by axes (Acc)
+```{r}
+#Acc X
+Acc_X_cal <- Acc_X_cal_1 %>% 
+  ggplot() + 
+  geom_line(mapping = aes(x = ID, y = Acc_X), color = "red") + 
+  geom_hline(yintercept = 0) + xlim(600, 800) + labs(y = "X")
+Acc_X_cal
+ggsave("/cloud/project/projects/mcgreal.pkg_project/Acc_X_cal.png")
+
+#Linear Acc Y
+Acc_Y_cal <- Acc_X_cal_1 %>% 
+  ggplot() + 
+  geom_line(mapping = aes(x = ID, y = Acc_Y), color = "green") + 
+  geom_hline(yintercept = 0) +
+  xlim(600, 800) + labs(y = "Y")
+Acc_Y_cal
+ggsave("/cloud/project/projects/mcgreal.pkg_project/Acc_Y_cal.png")
+
+#Linear Acc Z
+Acc_Z_cal <- Acc_X_cal_1 %>% 
+  ggplot() + 
+  geom_line(mapping = aes(x = ID, y = Acc_Z), color = "blue") + 
+  geom_hline(yintercept = 0) +
+  xlim(600, 800) + labs(y = "Z")
+Acc_Z_cal
+ggsave("/cloud/project/projects/mcgreal.pkg_project/Acc_Z_cal.png")
+
+#combine them
+Acc_cal_sep <- plot_grid(Acc_X_cal, Acc_Y_cal, Acc_Z_cal, labels = c('1', '1', '2', '2'), ncol = 1)
+Acc_cal_sep
+ggsave("/cloud/project/projects/mcgreal.pkg_project/Acc_cal_sep.png")
+```
+GROUP BY UNIQUE TIMESTAMPS AND PLOT THAT GROUP BY OBJECT
+
+
+
+acceleration -X
+```{r}
+linAccX_cal_plot_3 <- Acc_X_cal_1 %>% 
+  ggplot() + 
+  geom_line(mapping = aes(x = ID, y = linAcc_X, color = "X")) +
+  geom_hline(yintercept = 0) + xlim(1300, 1700) + labs(title = "Single Movement in -X Direction", x = "Sampling interval (sample #)", y = "Linear Acceleration (m/s^2)")
+linAccX_cal_plot_3
+ggsave("/cloud/project/projects/mcgreal.pkg_project/linAcc_backward_X.png")
+
+
+AccX_cal_plot_3 <- Acc_X_cal_1 %>% 
+  ggplot() + 
+  geom_line(mapping = aes(x = ID, y = Acc_X, color = "X")) + 
+   geom_hline(yintercept = 0) + xlim(1300, 1700) + labs(title = "Single Movement in -X Direction", x = "Sampling interval (sample #)", y = "Acceleration (m/s^2)") + theme(legend.title.align = none)
+AccX_cal_plot_3
+ggsave("/cloud/project/projects/mcgreal.pkg_project/Acc_backward_X.png")
+
+
+```

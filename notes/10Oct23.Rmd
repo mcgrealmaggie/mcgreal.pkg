@@ -1,0 +1,121 @@
+Class
+10 October 23
+Linear Models and Stats pt 2
+__________________________________
+
+MODEL SUMMARY INTERPRETATION
+__________________________________
+ANova: categorical predictor
+- expect sex to predict body depth
+- Df: 
+  the number of things that can be independent variables in your      analysis.
+  always have to have at least 1 Df (total # variables -1). 
+  usually its the # of variables - # parameters in model - 1. N-k-1
+- Residuals: 
+  red = 200 means 200 differences bw where is point and     where    is line
+- Sum of the square error: 
+  take every res and add it up. based on sex add it up (predicted    value) subtract expected from observed. square it to make all -    #s +
+- Mean sq error: 
+  sum of sq / total # D. tells you per point how much error there    is. on average how far each pt is from line. want to be low
+- p value: 
+  what is prob that we'd observe this distribution if there is no r   elationship between sex and body depth. < 0.05 = significant
+- Adjusted r sq: has a couple mechanisms to avoid overfitting.         typically reported in papers  
+  
+```{r}
+  
+model_fit <- lm(carapace_width ~ carapace_length, data = crabs)
+model_fit
+summary(model_fit)
+
+```
+_____________________________
+LM with multiple predictors
+_____________________________
+2 predictor variables. (carapace length and color) order doesn't matter just have to be after the ~
+```{r}
+model_fit <- lm(body_depth ~ carapace_length + color, data = crabs)
+#assuming carapce length and color are independent of one another
+
+summary(model_fit)
+
+library(broom)
+augment(model_fit) -> augmented_fit
+qqnorm(augmented_fit$.resid)
+qqline(augmented_fit$.resid, col = "red")
+
+```
+
+visualizing LM with multiple predictors
+```{r}
+ggplot(crabs, aes(x = carapace_length, y = body_depth, color = color)) +
+  geom_point() +
+  scale_color_manual(values = c("blue", "orange")) + 
+  geom_smooth(method = "lm") #add lines to it showing our linear model
+
+```
+
+_______________________________________
+LM with multiple numeric predictors
+_______________________________________
+
+```{r}
+model_fit <- lm(body_depth ~ carapace_width + carapace_length, data = crabs)
+
+summary(model_fit)
+#if your crab has both carapace width and length = 0, your body depth will be 0.5
+#when we increase c width by 1mm, we will decrease our body depth by almost 1/2mm (est column) assuming we have not changed c length
+
+ggplot(crabs, aes(x = carapace_length, y = body_depth, color = carapace_width)) + 
+  geom_point(size = 2.5) +
+  scale_color_distiller(palette = "Reds")
+
+```
+Additive effects (+)
+some variation coming from this some coming from that
+____________________________________
+INTERACTION EFFECTS MODEL
+____________________________________
+
+```{r}
+model_fit <- lm(body_depth ~ carapace_length * color, data = crabs)
+#we think bd depends on both c length and color, and that c length and color might depend on one another = interaction effect
+#bd is predicted by 2 variables (c length and color) and they are not ind of one another
+
+summary(model_fit)
+
+#carapace_length:colororange: interaction coefficient. as you increase both of these things, you increase body depth by ___. this one is significant = we know that they are probably related to each other, there is a true relationship there. if you have a sig int coeff you need to keep it (run it as independent/additive and as interaction to see)
+
+
+```
+
+_____________________________________________
+LM WITH MULTIPLE CATEGORICAL PREDICTORS
+_____________________________________________
+
+INTERACTION PLOT
+
+```{r}
+#interaction plot
+
+crabs %>% 
+  group_by(sex, color) %>% 
+  summarize(mean_body_depth = mean(body_depth)) %>%  #show mean response to predictors
+  ggplot(aes(x = sex, y = mean_body_depth, color = color)) +
+  geom_point() +
+  geom_path(aes(group = color)) + #will connect the m and f in each color group with a line
+  scale_color_manual(values = c("blue", "orange")) #order is important bc color variables in alphabetical order
+
+#on average for both sexes the orange crab is going to be deepr than blue crab. within each group, the f and m show some different dynamics
+
+```
+MANOVAS
+dependent/interacting predictor variables
+```{r}
+model_fit <- lm(body_depth ~ sex * color, data = crabs)
+
+summary(model_fit)
+
+#  1.5340 independent coefficient for sex. would expect crab to be   1.5340 deeper when controlling for color but changing sex
+#sexM:colororange  -1.8420 = the interaction bw color and sex is making the crab depths about -1.8420 smaller
+
+```

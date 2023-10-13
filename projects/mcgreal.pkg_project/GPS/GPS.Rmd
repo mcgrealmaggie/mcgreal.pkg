@@ -1,0 +1,53 @@
+Read in file
+```{r}
+library(tidyverse)
+data_GPS <- read_csv("data_gps.csv", na = "1000")
+head(data_GPS)
+```
+
+Add timestamps
+```{r}
+library(lubridate)
+
+DT <- ymd_hms("1997-06-10 12:06:50")
+crocsdf$date <- ymd(crocsdf$date)
+
+times <- parse_hms(c("00:00:00.25", "00:00:01", "00:01:30", "01:00:00"))
+
+#set value to numeric
+times_num <- as.numeric(times)
+
+#format inputs
+as_hms(times_num)
+
+
+
+crocsdf <- crocsdf %>% 
+  mutate(datetime = make_datetime(date, time))
+
+
+
+head(crocsdf$datetime)
+head(data_GPS)
+
+library(hms)
+
+#set format
+times <- parse_hms(c("00:00:00.25", "00:00:01", "00:01:30", "01:00:00"))
+times
+
+#set value to numeric
+times_num <- as.numeric(times)
+times_num
+
+#format inputs
+as_hms(times_num)
+
+#add column to dataframe
+data_GPS$time <- as_hms(paste(data_GPS$Hour, data_GPS$Minute, data_GPS$Second, sep = ":"))
+head(data_GPS)
+
+data_GPS <- tibble::rowid_to_column(data_GPS, "ID")
+head(data_GPS)
+
+```

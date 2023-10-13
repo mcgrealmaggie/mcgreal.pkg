@@ -1,0 +1,69 @@
+---
+title: "Homework One"
+output: html_document
+---
+
+## Homework One
+
+### Due Aug. 26th at 5pm. Simply write your answers in and save in the homeworks folder in your Rstudio.
+
+This is going to be a low-stakes effort to get you comfortable with RStudio and RMarkdown. First, you're going to download the RMarkdown Document for this homework. Copy and paste this command into the console of your RStudio instance.
+
+```{r}
+
+```
+
+Can you find where the file downloaded to? Look at the help entry for `download.file` if you aren't sure.
+
+Open the file and answer these two questions: 
+
+1. (1pt) What does `download.file` do? 
+
+```
+'download.file' downloads a file from a given url and stores in in the destination file, or 'destfile' you specify to send it to.
+```
+
+2. (1pt) Where did your HW1.Rmd file download to? 
+
+```
+My HW1.Rmd file downloaded to the file "Homework_1.Rmd" located in the homeworks folder within the project tab in my cloud server.
+```
+
+Next, we're going to try to execute some code in an RMarkdown document. Press the green triangle.
+
+```{r}
+animals <- c("cat", "rat", "dog") #we used the "c" function to store these words in a vector called "animals", which describes a collection or list of items we want to work with. In this case the vector consists of strings, or words, seen within quotation marks.
+weights <- c(15, 1, 120) 
+animals[c(1,3)] #here we are indexing the 1st and 3rd items in the animal vector, which are "cat" = 1st, and "dog" = 3rd.
+```
+
+What just happened? Annotate the above code with two comments (each worth one point) explaining the code.
+
+We can also embed plots in RMarkdown. The below code should embed a barplot. Not very useful, but let me know if you don't see one show up in your file.
+
+```{r}
+barplot(names.arg=animals, height=weights)
+```
+
+Did the plot show up OK?
+
+```
+Yes.
+
+```
+
+## Getting to know you all
+
+For the remainder of the assignment, I need to know three things.
+
+1. What type of data will you be working with for your thesis or research project? For example: matrices of phylogenetic characters, spreadsheets of ecological observations, shapefiles from 3D scanning, etc. If you aren't actively doing research, what kinds of scientific questions do you find interesting?
+
+The data I will be working with for my thesis project will be obtained on biologgers and sent remotely via satellite communication for online download. These files will be very large spreadsheets containing continuous data collected from triaxial accelerometers and on-board GPS for each animal fitted with a tracker. 
+
+2. What are you hoping to get out of class?
+
+I am hoping to use the skills learned in this class to analyze my data for my project which will include the creation of a behavior classification model (involving the acceleration values, behavioral descriptions from observation, and the application of classification algorithms like Random Forest Models or Support Vector Machines) as well as combining the output behaviors and acceleration values with the GPS locations to create maps of activity and energy expenditure.
+
+3. Are there topics that aren't on the schedule that you'd be interested to see? 
+
+I would like to learn how to animate tracks with R.

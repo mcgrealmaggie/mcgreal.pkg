@@ -1,0 +1,216 @@
+For this first part of the exam, you can either use surveys_complete.csv or your own data. If you are using your own data, you must have data in which you think you have a numerical predictor variable and a numerical response variable. If you are using surveys_complete, you can use weight and hindfoot_length for this.
+
+Save this file in your projects directory. You can either save it in a project two subdirectory, or just put it in projects. Either way is fine.
+
+Load in your data. Which variable will you be using as a predictor, and which as a response? (5 pts)
+```{r}
+# read in data here
+data <- read_csv("mcgreal.pkg_temps.csv", na = "1000")
+head(data)
+
+```
+
+Answer which column is predictor and which is response:
+- My response variable is ODBA and the predictor is temperature (F).
+- To do this, I need to create my response variable which is going to be ODBA, a proxy for activity level/energy expenditure. I made functions for this a few weeks ago so I'll apply those here.
+
+```{r}
+## Create a function that selects a column, calculates the absolute value of each value in that column, and then produces a new column with those absolute values
+
+abs_values <- function(data, column, new_column){
+  new <- data %>% 
+    mutate(new = abs({{column}})) %>% 
+    rename({{new_column}} := new) 
+  return(new)
+}
+
+#run the function for X, Y, and Z linear Acc columns
+data_abs <- data %>% 
+  abs_values(column = linAcc_X, new_column = linAccX_abs) %>% 
+  abs_values(column = linAcc_Y, new_column = linAccY_abs) %>% 
+  abs_values(column = linAcc_X, new_column = linAccZ_abs)
+
+View(data_abs)
+
+## Create a function that adds the absolute values of 3 columns together to produce an output column of ODBA
+
+ODBA <- function(data, column_one, column_two, column_three, new_column){
+  new <- data %>% 
+    mutate(new = {{column_one}} + {{column_two}} + {{column_three}}) %>% 
+    rename({{new_column}} := new)
+  return(new)
+}
+
+data <- ODBA(data = data_abs, column_one = linAccX_abs, column_two = linAccY_abs, column_three = linAccZ_abs, new_column = ODBA)
+
+View(data)
+```
+
+
+Plot the two against each other with a scatter plot. Do the data appear to be related linearly? (5 pts)
+```{r}
+# Plot here
+plot <- ggplot(data = data, mapping = aes(x = temp, y = ODBA)) +
+  geom_point()
+plot
+
+plot <- ggplot(data = data, mapping = aes(x = temp, y = ODBA)) +
+  geom_point() +
+  geom_jitter()
+plot
+
+plot <- ggplot(data = data, mapping = aes(x = temp, y = ODBA)) + geom_boxplot()
+ 
+plot
+#Answer here
+# The relationship between the variables does not appear relatively linear, and resulted in points plotted in a series of vertical lines, likely due to the limited variability in the temperature variable. It does show signs of a positive trend though and I do expect a clear linear relationship to be the case when I have a real and much larger sample size.
+```
+Fit the linear model. View the summary. (5 pts)
+```{r}
+lm <- lm(ODBA ~ temp, data = data)
+summary(lm)
+```
+Does the summary make sense when you compare it to the plot you made? Does our model have good predictive power? Evaluate the residual standard error, intercept, and R-Squared in particular. Would you say your predictor predicts the response? (10 pts)
+# A residual standard error measures how well the model fits the dataset and in this case is 2.055, which I believe is relatively high. The intercept predicts that ODBA will be -25.28977 when temperature is 0, with a standard error of 3.46435, and a very small p-value indicating significance therefore indicating the intercept is different than 0. The R-squared is 0.02872 which describes how well the model explains observed data (~3%) and how much of the variation in ODBA is unexplained by our model (~97%). Given this information, I would not say my predictor predicts the response relatively poorly. 
+
+
+Plot the model on the graph. Increase the size of the text so it is comfortably readable at 5 feet. Make sure axis labels are readable and not overlapping with one another. (5 pts)
+```{r}
+plot + geom_smooth(method = "lm", color = "navy", size = 0.5, fill = "deeppink") +   labs(title = "Linear Regression to Predict Activity Levels", x = "Temperature (F)", y = "ODBA") +
+  annotate("text", x = 79.5, y = 16, label = "R^2 == 0.02872", parse = TRUE, color = "firebrick", size = 5) + theme_bw() +
+    theme(text=element_text(size = 18))
+
+```
+
+Check the normality of the residuals. Do they look OK? Are we violating assumptions? (5 pts)
+```{r}
+augment(lm) -> augmented_fit
+qqnorm(augmented_fit$.resid)
+qqline(augmented_fit$.resid, col="red")
+
+# The residuals are not quite normally distributed given the extent of positive outliers meaning that we are violating the assumtion that errors are random and normally distributed and it may imply that my variables are skewed.
+```
+Why is normality of residuals important?
+#Normal residuals are important because they ensure that the statistical tests used in linear regression are accurate and unbiased.
+
+If you are using surveys_complete: Is there interspecific variation in the linear model? Hint: look at our prior work with facet plots. (15 pts)
+If you are not using surveys_complete: Do you think there are groupings within your data that may have a separate linear model? Try grouping the data by that variable and redoing the lm. If this would not make sense for your data, you may also attempt to do multiple predictor variables. (15 pts)
+```{r}
+#I will replace the temperature explanatory variable with AccX
+#This is not a great example but it would make sense for my data in theory that we could predict acitivy level based off the dominant axis driving the motion (AccY= tail beat frequency, etc)
+plot2 <- ggplot(data = data, mapping = aes(x = Acc_X, y = ODBA)) +
+  geom_point()
+plot2
+
+lm2 <- lm(ODBA ~ Acc_X, data = data)
+summary(lm2)
+
+plot2 + geom_smooth(method = "lm", color = "navy", size = 0.5, fill = "deeppink") +   labs(title = "Linear Regression to Predict Activity Levels", x = "Acceleration X (m/s^2)", y = "ODBA") +
+  annotate("text", x = -8, y = 20, label = "R^2 == 0.002725", parse = TRUE, color = "firebrick", size = 5) + theme_bw() +
+    theme(text=element_text(size = 18))
+
+augment(lm2) -> augmented_fit2
+qqnorm(augmented_fit2$.resid)
+qqline(augmented_fit2$.resid, col="red")
+
+#Although the residuals do not appear normally distributed, this model seems much better with a lower R^2 value, p-values of significance, and coefficients that do make sense in the context of the measures.
+```
+
+#code here
+Part Two
+In this portion, you are free to use your own data if you have a categorical predictor variable and a response variable. Otherwise, you may use the columns sex and weight in surveys_complete
+
+categorical predictor variable = Behavior
+response variable = ODBA
+
+First, plot the data grouped by Behavior (5 pts)
+```{r}
+#read in new file with behavior column
+data2 <- read_csv("mcgreal.pkg_temps_B.csv", na = "1000")
+head(data2)
+
+# generate ODBA column
+#abs_values function
+bdata_abs <- data2 %>% 
+  abs_values(column = linAcc_X, new_column = linAccX_abs) %>% 
+  abs_values(column = linAcc_Y, new_column = linAccY_abs) %>% 
+  abs_values(column = linAcc_X, new_column = linAccZ_abs)
+
+head(bdata_abs)
+
+#ODBA function
+data2 <- ODBA(data = bdata_abs, column_one = linAccX_abs, column_two = linAccY_abs, column_three = linAccZ_abs, new_column = ODBA)
+
+head(data2)
+
+bdata <- bdata %>% 
+  select(ODBA, behavior) %>% 
+  na.omit() %>% 
+  group_by(behavior)
+
+head(bdata)
+
+# Plot code here
+bplot <- ggplot(data = bdata, aes(x = behavior, y = ODBA, color = behavior)) + geom_jitter() 
+bplot
+
+```
+
+Try an ANOVA of this data (5 pt)
+```{r}
+## perform linear model and save as model_fit
+model_fit <- lm(ODBA ~ behavior, data = bdata)
+
+## as an ANOVA
+aov(model_fit) -> anova_model_fit
+summary(anova_model_fit)
+
+```
+How about a linear model? What information does this give you that an ANOVA can’t? (5 pts)
+```{r}
+lm <- lm(ODBA ~ behavior, data = bdata) 
+summary(lm)
+
+# Answer here
+#A linear model summary can provide extra information about the relationship between the  variables, including coefficients, their significance, and quantify how well the model fits, while ANOVA provides information about differences in means between groups but doesn't provide the same level of detail about the relationship.
+```
+
+Plot the lm with the data, with points colored by sex. (10 pts)
+```{r}
+bplotlm <- bplot + geom_smooth(method = "lm", size = 0.5) +   labs(title = "Linear Regression to Predict Activity Levels", x = "Behavior", y = "ODBA") +
+  annotate("text", x = 2, y = 20, label = "R^2 == 0.3509 ", parse = TRUE, color = "firebrick", size = 5) + theme_bw() +
+    theme(text=element_text(size = 18))
+bplotlm
+```
+
+
+Choose any model we’ve looked at so far, but use two predictor variables. Perform an LM, plot the results, and state if this changes your interpretation of the relationship between variables (10 pts)
+```{r}
+model_fit <- lm(ODBA ~ behavior * temp, data = data2)
+summary(model_fit)
+
+
+augment(model_fit) -> augmented_fitp
+qqnorm(augmented_fitp$.resid)
+qqline(augmented_fitp$.resid, col="red")
+
+
+plotp <- data2 %>%
+  ## get mean ODBA per group
+  group_by(behavior, temp) %>% 
+  summarize(mean_ODBA = mean(ODBA)) %>%
+  ggplot(aes(x = temp, y = mean_ODBA, color = behavior)) + 
+    geom_point() + 
+    geom_path(aes(group = behavior))
+plotp
+
+```
+#This model predicts ODBA based on behavior and temperature. The coefficients section shows the estimated effects of different behaviors and temperature on ODBA. For example, "behaviorDIVE" has a negative impact on ODBA, and "behaviorWALK" has a strong negative effect, while "temp" has a positive impact. The interaction terms like "behaviorDIVE:temp" show how the combination of behavior and temperature influences ODBA. "Adjusted R-squared" is a measure of how well the model fits the data, with a value of 0.3646 indicating relatively good fit. The "F-statistic" tests if the model is statistically significant, and the very low p-value suggests that it is. The residual standard error measures the model's error, with lower values indicating better fit. This model gives me a much better and detailed view of the impacts of behavior and temperature on ODBA
+
+Part Three
+Add and commit this document (5 pts)
+#Commands here
+Push your changes to github (10 pts)
+#Commands here
+MS students
+My expectation is that you’ll do this with your own data. If any part of this doesn’t make sense with your data, please get in touch ASAP so we can work it out.

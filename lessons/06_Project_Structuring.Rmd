@@ -1,0 +1,76 @@
+---
+title: "Project Structuring"
+author: "April Wright"
+date: "2022-10-06"
+output: html_document
+---
+
+```{r setup, eval = FALSE, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## To be completed in lieu of class 10/10/22
+
+For your final project in this class, you will be developing an R package. For all participants in this class, this R package will contain:
+
++ A function to clean some data of your choice
++ A statistical function (ANOVA, LM, other of your choosing)
++ A function that plots data
+
+For graduate students and H-Option students, you will also include two other functions of your choosing.
+
+Over the next few weeks, we will begin work on these packages. For this week, we will do some basic set up. 
+
+First, on GitHub, on the left hand side of the screen, click the New Repository button. This will generate a new repository. Name it yourlastname_pkg. Copy the URL of this repo. 
+
+Log in to RStudio. Rather than reloading your workspace as normal, click on 'New Project' in the upper right-hand side of the interface. Choose New Project from Repo. This is where you will enter the URL you pasted from GitHub. It will take a moment to generate a new, clean R install. This is where you will build your R package. Change the name from Untitled project to what you would like to the same name as your repo name.
+
+In this directory, we will do three things. First, create a scripts directory and a data directory. Upload your data to the data directory. Within the scripts directory, create three (five for grad and H-Option) .R files (File > New File > R Script). Title each one with a descriptive name. For example, if one of your three (or five) functions will be making a histogram, you might call it `Histogram.R`.
+
+The second thing we will do is install any needed R packages. For example, you might know you will need  tidyverse. Go nuts. Install whatever.
+
+Lastly, we'll be setting git up. Follow the below instructions. 
+
+```{r}
+install.packages("usethis")
+library(usethis)
+```
+
+Next, in the terminal:
+
+```
+git config --global user.name "Your name"
+git config --global user.email "your email"
+```
+
+Then, back in R:
+
+```{r, eval=FALSE}
+use_git()
+```
+
+Select the positive option. Next, we'll create our access token.
+
+```{r, eval=FALSE}
+
+create_github_token()
+```
+
+Put "GBIO class project" in for purpose. Set the access period to 90 days. Create the token and copy it.
+
+Next, we give the token to Git:
+
+```{r, eval=FALSE}
+gitcreds::gitcreds_set()
+
+```
+Paste in your token.
+
+You may need to reload the Rstudio window, but you should now be able to commit and push your data and scripts directory.
+
+
+
+
+
+
+
