@@ -1,0 +1,37 @@
+__________________________________________________________________
+DATE AND TIME: of sample acquisition recorded from Real Time Clock
+__________________________________________________________________
+Month -> RTC month
+Day -> RTC day
+Year -> RTC year
+Hour -> RTC hour
+Minute -> RTC minute
+Second -> RTC second
+Milliseconds -> RTC millisecond
+__________________________________________________________________
+IMU SENSOR MEASUREMENTS
+__________________________________________________________________
+Acc_X -> acceleration (m/s^2) x-axis including effect of gravity (9.8 m/s^2)
+Acc_Y -> acceleration (m/s^2) y-axis including effect of gravity (9.8 m/s^2)
+Acc_Z -> acceleration (m/s^2) z-axis including effect of gravity (9.8 m/s^2)
+linAcc_X -> linear acceleration (m/s^2) x-axis excluding effect of gravity
+linAcc_Y -> linear acceleration (m/s^2) y-axis excluding effect of gravity
+linAcc_Z -> linear acceleration (m/s^2) z-axis excluding effect of gravity
+gyro_X -> angular velocity (degrees) about the x-axis
+gyro_Y -> angular velocity (degrees) about the y-axis
+gyro_Y -> angular velocity (degrees) about the z-axis
+mag_X -> multiplexed magnetometer X
+mag_Y -> multiplexed magnetometer Y
+mag_Z -> multiplexed magnetometer Z
+quatI -> quaternion rotation I dimension
+quatJ -> quaternion rotation I dimension
+quatK -> quaternion rotation I dimension
+__________________________________________________________________
+GPS LOCATIONS
+__________________________________________________________________
+Lattitude -> the angular distance north or south of the equator in UTM
+Longitude -> the angular distance east or west of the meridian at Greenwich, England in UTM
+__________________________________________________________________
+EXTRACTED TIME SERIES
+__________________________________________________________________
+ODBA -> sum of the absolute values of each linear acceleration axis (x, y, and z)
