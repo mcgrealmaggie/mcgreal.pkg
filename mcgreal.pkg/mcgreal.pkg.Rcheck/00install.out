@@ -1,0 +1,10 @@
+* installing *source* package ‘mcgreal.pkg’ ...
+** using staged installation
+** R
+** data
+** byte-compile and prepare package for lazy loading
+Error in data %>% mutate(new = { : could not find function "%>%"
+Error: unable to load R code in package ‘mcgreal.pkg’
+Execution halted
+ERROR: lazy loading failed for package ‘mcgreal.pkg’
+* removing ‘/cloud/project/mcgreal.pkg/mcgreal.pkg.Rcheck/mcgreal.pkg’

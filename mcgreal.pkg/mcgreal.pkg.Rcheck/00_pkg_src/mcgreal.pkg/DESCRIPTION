@@ -1,0 +1,23 @@
+Package: mcgreal.pkg
+Title: An R package for processing animal-borne satellite tracker data
+        from various sensors onboard the device
+Version: 0.1
+Authors@R: c(
+  person(given = "Maggie",
+  family = "McGreal",
+  role = c("cre", "aut"),
+  email = "maggie.mcgreal@selu.edu")
+  )
+Description: This package is intended for users of custom-built satellite trackers with the purpose of visualizing and analyzing raw data of measurements collected from various sensors onboard the device: GPS, Arduino IMU, and more. 
+License: MIT + file LICENSE
+Dependents: R(>=2.10)
+Imports: tidyverse, broom
+RoxygenNote: 7.1.1
+Suggests: knitr, rmarkdown
+VignetteBuilder: knitr
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+NeedsCompilation: no
+Packaged: 2023-10-31 19:14:03 UTC; r2159919
+Author: Maggie McGreal [cre, aut]
+Maintainer: Maggie McGreal <maggie.mcgreal@selu.edu>
